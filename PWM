@@ -1,0 +1,54 @@
+import RPi.GPIO as GPIO
+import time
+GPIO.setmode(GPIO.BCM)
+
+TRIG = 2
+ECHO = 4
+LED = 26
+
+
+GPIO.setup(TRIG, GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
+GPIO.setup(LED, GPIO.OUT)
+
+pwm = GPIO.PWM(LED, 100)
+pwm.start(0)
+
+def distance():
+    GPIO.output(TRIG, True)
+    time.sleep(0.00001)
+    GPIO.output(TRIG, False)
+
+    start = time.time()
+    stop = time.time()
+
+    while GPIO.input(ECHO) == 0:
+        start = time.time()
+
+    while GPIO.input(ECHO) == 1:
+        stop = time.time()
+        TimeElapsed = stop-start
+
+        # sonic speed (34300 cm/s)
+        distance = (TimeElapsed*34300)/2
+
+    if(distance <= 50):
+        pwm.ChangeDutyCycle(100 - distance*2)
+        print('%.1f cm away' % distance)
+        time.sleep(0.5)
+
+    else:
+        print('No object in range')
+        pwm.ChangeDutyCycle(0)
+        time.sleep(1)
+
+if __name__ == '__main__':
+    try:
+        while True:
+            distance()
+
+    except KeyboardInterrupt:
+        print("Measurement stopped by User")
+
+    finally:
+        GPIO.cleanup()
